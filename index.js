@@ -13,7 +13,7 @@ app.use(express.json());
 // ----------------------------------------------
 // ENVIRONMENT VARIABLES
 // ----------------------------------------------
-const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+const VERIFY_TOKEN = 'sanjay_verify_123';
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 
