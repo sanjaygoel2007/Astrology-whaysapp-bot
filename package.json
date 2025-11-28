@@ -1,0 +1,13 @@
+{
+  "name": "puratan-hindu-tarika-bot",
+  "version": "1.0.0",
+  "description": "Astrology WhatsApp bot for Puratan Hindu Tarika (SK Goel)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "express": "^4.19.0"
+  }
+}
