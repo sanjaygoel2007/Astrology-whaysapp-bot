@@ -25,10 +25,10 @@ export const MAHADASHA_PLAYLISTS = {
     Chandra: "https://youtube.com/playlist?list=PLzV-R7eJU4inrnjsWJE4qPWhlN-CVF1HP",
     Mangal:  "https://youtube.com/playlist?list=PLzV-R7eJU4in9U1qdffV69tTRO3lL7eRz",
     Budh:    "https://youtube.com/playlist?list=PLzV-R7eJU4inmgi-7S1i6PadFgiLinFF7",
-    Guru:    " https://www.youtube.com/playlist?list=PLzV-R7eJU4imkfZekbrcUYxM9dcaxTXVV ,
+    Guru:    "https://www.youtube.com/playlist?list=PLzV-R7eJU4imkfZekbrcUYxM9dcaxTXVV",
     Shukra:  "https://youtube.com/playlist?list=PLzV-R7eJU4inAUzwycOxY5GgYBcVQA7yE",
     Shani:   "https://www.youtube.com/playlist?list=PLzV-R7eJU4injj5itR5JGH9z4zhcufbJX",
-    Rahu:    "सूर्य / राहु: https://www.youtube.com/playlist?list=PLzV-R7eJU4ikdJC1VUCnojAcWzqDKnvzV",
+    Rahu:    "https://www.youtube.com/playlist?list=PLzV-R7eJU4ikdJC1VUCnojAcWzqDKnvzV",
     Ketu:    "https://youtube.com/playlist?list=PLzV-R7eJU4im3cvZTuzVxkd-P7q1o-zEg",
   },
 
@@ -143,7 +143,7 @@ export const MAHADASHA_PLAYLISTS = {
   Ketu: {
     Surya:   "https://www.youtube.com/playlist?list=PLzV-R7eJU4ilRe59V5ctJxisbnGFmfikG",
     Chandra: "https://www.youtube.com/playlist?list=PLzV-R7eJU4iklcaek1dUYMm9tVAfAETsn",
-    Mangal:  "https://www.youtube.com/playlist?list=PLzV-R7eJU4ikeP-dcDtgN53YzXLAWtLa5,
+    Mangal:  "https://www.youtube.com/playlist?list=PLzV-R7eJU4ikeP-dcDtgN53YzXLAWtLa5",
     Budh:    "https://www.youtube.com/playlist?list=PLzV-R7eJU4imLXJrTOh60q_X29xse6mDS",
     Guru:    "https://www.youtube.com/playlist?list=PLzV-R7eJU4imoURjP_h7MCi4kkwn_Qn-x",
     Shukra:  "https://www.youtube.com/playlist?list=PLzV-R7eJU4imuqnVNasQyXMc_rrFhMerM",
