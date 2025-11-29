@@ -1,6 +1,6 @@
 // ===============================================
-//  Puratan Hindu Tarika WhatsApp Bot (Final Version)
-//  Fully Working Webhook + Playlists
+// Puratan Hindu Tarika Bot (WhatsApp Cloud API)
+// Node.js + Express + YouTube Playlists
 // ===============================================
 
 const express = require("express");
@@ -13,11 +13,18 @@ app.use(express.json());
 // ----------------------------------------------
 // ENVIRONMENT VARIABLES
 // ----------------------------------------------
+
+// YEHI TOKEN META DEVELOPER PORTAL PAR DALNA HAI
+const VERIFY_TOKEN = "1234";
+
+// Render ke Environment Variables me ye 2 honi chahiye:
+// WHATSAPP_TOKEN      = aapka permanent access token
+// WHATSAPP_PHONE_ID   = phone number ID (Meta se)
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 
 // ----------------------------------------------
-// PLAYLISTS
+// YOUTUBE PLAYLIST LINKS
 // ----------------------------------------------
 const PLAYLISTS = {
   job: "https://youtube.com/playlist?list=PLzV-R7eJU4ik35yPdfzcqK2Lz5qOOq-3K",
@@ -30,17 +37,21 @@ const PLAYLISTS = {
 
 // ----------------------------------------------
 // WEBHOOK VERIFICATION (GET)
-// 100% works – returns challenge without checking token
 // ----------------------------------------------
 app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  if (challenge) {
-    console.log("Webhook verification request received");
-    return res.status(200).send(challenge);
-  }
+  console.log("Webhook GET:", mode, token, challenge);
 
-  return res.status(200).send("Puratan Hindu Tarika Webhook OK!");
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    // Verification successful
+    return res.status(200).send(challenge);
+  } else {
+    // Verification failed
+    return res.sendStatus(403);
+  }
 });
 
 // ----------------------------------------------
@@ -49,26 +60,29 @@ app.get("/webhook", (req, res) => {
 app.post("/webhook", async (req, res) => {
   try {
     const data = req.body;
+    console.log("Incoming webhook:", JSON.stringify(data, null, 2));
 
     if (
       data.entry &&
       data.entry[0].changes &&
-      data.entry[0].changes[0].value.messages
+      data.entry[0].changes[0].value &&
+      data.entry[0].changes[0].value.messages &&
+      data.entry[0].changes[0].value.messages[0]
     ) {
       const message = data.entry[0].changes[0].value.messages[0];
 
       if (message.type === "text") {
         const from = message.from;
-        const text = message.text.body.toLowerCase();
-        console.log("User:", text);
+        const text = (message.text.body || "").toLowerCase();
 
+        console.log("User message:", from, text);
         await handleUserMessage(from, text);
       }
     }
 
     res.sendStatus(200);
   } catch (err) {
-    console.error("POST webhook error:", err);
+    console.error("POST /webhook error:", err);
     res.sendStatus(500);
   }
 });
@@ -94,12 +108,15 @@ async function sendMessage(to, message) {
 
     console.log("Message sent to", to);
   } catch (err) {
-    console.error("Message send error:", err.response?.data || err);
+    console.error(
+      "Message send error:",
+      err.response?.data || err.message || err
+    );
   }
 }
 
 // ----------------------------------------------
-// MESSAGE HANDLING LOGIC
+// MESSAGE LOGIC
 // ----------------------------------------------
 async function handleUserMessage(user, msg) {
   if (msg.includes("job") || msg.includes("career")) {
@@ -107,26 +124,48 @@ async function handleUserMessage(user, msg) {
   }
 
   if (msg.includes("business") || msg.includes("money")) {
-    return sendMessage(user, `💰 Business / Money Playlist:\n${PLAYLISTS.business}`);
+    return sendMessage(
+      user,
+      `💰 Business / Money Playlist:\n${PLAYLISTS.business}`
+    );
   }
 
-  if (msg.includes("marriage") || msg.includes("relationship") || msg.includes("love")) {
-    return sendMessage(user, `❤️ Marriage / Relationship Playlist:\n${PLAYLISTS.marriage}`);
+  if (
+    msg.includes("marriage") ||
+    msg.includes("relationship") ||
+    msg.includes("love")
+  ) {
+    return sendMessage(
+      user,
+      `❤️ Marriage / Relationship Playlist:\n${PLAYLISTS.marriage}`
+    );
   }
 
-  if (msg.includes("health") || msg.includes("disease") || msg.includes("body")) {
+  if (
+    msg.includes("health") ||
+    msg.includes("disease") ||
+    msg.includes("body")
+  ) {
     return sendMessage(user, `🧘 Health Playlist:\n${PLAYLISTS.health}`);
   }
 
-  if (msg.includes("education") || msg.includes("study") || msg.includes("children")) {
-    return sendMessage(user, `📚 Education / Children Playlist:\n${PLAYLISTS.education}`);
+  if (
+    msg.includes("education") ||
+    msg.includes("study") ||
+    msg.includes("children") ||
+    msg.includes("child")
+  ) {
+    return sendMessage(
+      user,
+      `📚 Education / Children Playlist:\n${PLAYLISTS.education}`
+    );
   }
 
-  if (msg.includes("other") || msg.includes("etc")) {
+  if (msg.includes("other") || msg.includes("etc") || msg.includes("misc")) {
     return sendMessage(user, `🌀 Other Playlist:\n${PLAYLISTS.other}`);
   }
 
-  // Default Menu
+  // DEFAULT REPLY
   return sendMessage(
     user,
     `🙏 *Puratan Hindu Tarika Bot*  
@@ -144,7 +183,7 @@ Example: *job*, *business*, *marriage*`
 }
 
 // ----------------------------------------------
-// ROOT ROUTE
+// ROOT PAGE
 // ----------------------------------------------
 app.get("/", (req, res) => {
   res.send("Puratan Hindu Tarika Bot is Running Successfully ✔️");
