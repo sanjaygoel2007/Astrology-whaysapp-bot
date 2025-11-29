@@ -1,82 +1,58 @@
-// --------------------------
-// ASTROLOGY WHATSAPP BOT
-// --------------------------
-import express from "express";
-import bodyParser from "body-parser";
-import axios from "axios";
-
+const express = require("express");
 const app = express();
-app.use(bodyParser.json());
 
-// Your WhatsApp token
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "YOUR_TOKEN_HERE";
+// Middleware to parse JSON
+app.use(express.json());
 
-// --------------------------
-// 1) WEBHOOK VERIFICATION
-// --------------------------
+// Verify token (same token you added in Meta dashboard & Render environment)
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "1234";
+
+// ➤ Webhook verification (GET)
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  console.log("Webhook GET:", mode, challenge);
+  console.log("Webhook GET request received:", req.query);
 
-  // 👉 Token check hata diya (universal pass)
-  if (mode === "subscribe") {
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    console.log("Webhook verified successfully!");
     return res.status(200).send(challenge);
+  } else {
+    console.log("Webhook verification failed!");
+    return res.sendStatus(403);
   }
-  return res.sendStatus(403);
 });
 
-// --------------------------
-// 2) WEBHOOK MESSAGE RECEIVE
-// --------------------------
-app.post("/webhook", async (req, res) => {
-  console.log("POST Webhook Received:", JSON.stringify(req.body, null, 2));
+// ➤ Webhook receiver (POST)
+app.post("/webhook", (req, res) => {
+  console.log("Webhook POST Data:", JSON.stringify(req.body, null, 2));
 
   try {
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const message = changes?.value?.messages?.[0];
+    if (
+      req.body &&
+      req.body.entry &&
+      req.body.entry[0].changes &&
+      req.body.entry[0].changes[0].value.messages
+    ) {
+      const message =
+        req.body.entry[0].changes[0].value.messages[0].text.body;
 
-    if (message) {
-      const from = message.from;
-      const text = message.text?.body;
-
-      console.log("Received message:", text);
-
-      // reply
-      await axios.post(
-        `https://graph.facebook.com/v17.0/${process.env.PHONE_NUMBER_ID}/messages`,
-        {
-          messaging_product: "whatsapp",
-          to: from,
-          text: { body: "Your message: " + text }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      console.log("Received message:", message);
     }
   } catch (err) {
-    console.error("Error handling message:", err);
+    console.log("Error processing message:", err);
   }
 
   res.sendStatus(200);
 });
 
-// --------------------------
-// 3) HOME ROUTE
-// --------------------------
+// Default route
 app.get("/", (req, res) => {
-  res.send("WhatsApp bot is running");
+  res.send("WhatsApp Bot is running.");
 });
 
-// --------------------------
-// 4) START SERVER
-// --------------------------
+// Server start
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
