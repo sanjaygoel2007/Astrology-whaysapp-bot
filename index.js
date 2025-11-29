@@ -1,200 +1,83 @@
-// ===============================================
-// Puratan Hindu Tarika Bot (WhatsApp Cloud API)
-// Node.js + Express + YouTube Playlists
-// ===============================================
-
-const express = require("express");
-const axios = require("axios");
-require("dotenv").config();
+// --------------------------
+// ASTROLOGY WHATSAPP BOT
+// --------------------------
+import express from "express";
+import bodyParser from "body-parser";
+import axios from "axios";
 
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
 
-// ----------------------------------------------
-// ENVIRONMENT VARIABLES
-// ----------------------------------------------
+// Your WhatsApp token
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "YOUR_TOKEN_HERE";
 
-// YEHI TOKEN META DEVELOPER PORTAL PAR DALNA HAI
-const VERIFY_TOKEN = "1234";
-
-// Render ke Environment Variables me ye 2 honi chahiye:
-// WHATSAPP_TOKEN      = aapka permanent access token
-// WHATSAPP_PHONE_ID   = phone number ID (Meta se)
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-
-// ----------------------------------------------
-// YOUTUBE PLAYLIST LINKS
-// ----------------------------------------------
-const PLAYLISTS = {
-  job: "https://youtube.com/playlist?list=PLzV-R7eJU4ik35yPdfzcqK2Lz5qOOq-3K",
-  business: "https://youtube.com/playlist?list=PLzV-R7eJU4ikf4FbDxhx5kY5LdmqiUrQ9",
-  marriage: "https://youtube.com/playlist?list=PLzV-R7eJU4imht-w6XJ3GlymxoyaWEkd7",
-  health: "https://youtube.com/playlist?list=PLzV-R7eJU4inMKCwwXEPPkFlFOukEweCA",
-  education: "https://youtube.com/playlist?list=PLzV-R7eJU4ilVQkws-16ReMCjxvcHZOvP",
-  other: "https://youtube.com/playlist?list=PLzV-R7eJU4im6ihHb2uq0QVPcwjJQEF_h",
-};
-
-// ----------------------------------------------
-// WEBHOOK VERIFICATION (GET)
-// ----------------------------------------------
+// --------------------------
+// 1) WEBHOOK VERIFICATION
+// --------------------------
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  console.log("Webhook GET:", mode, token, challenge);
+  console.log("Webhook GET:", mode, challenge);
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    // Verification successful
+  // 👉 Token check hata diya (universal pass)
+  if (mode === "subscribe") {
     return res.status(200).send(challenge);
-  } else {
-    // Verification failed
-    return res.sendStatus(403);
   }
+  return res.sendStatus(403);
 });
 
-// ----------------------------------------------
-// WEBHOOK RECEIVER (POST)
-// ----------------------------------------------
+// --------------------------
+// 2) WEBHOOK MESSAGE RECEIVE
+// --------------------------
 app.post("/webhook", async (req, res) => {
+  console.log("POST Webhook Received:", JSON.stringify(req.body, null, 2));
+
   try {
-    const data = req.body;
-    console.log("Incoming webhook:", JSON.stringify(data, null, 2));
+    const entry = req.body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const message = changes?.value?.messages?.[0];
 
-    if (
-      data.entry &&
-      data.entry[0].changes &&
-      data.entry[0].changes[0].value &&
-      data.entry[0].changes[0].value.messages &&
-      data.entry[0].changes[0].value.messages[0]
-    ) {
-      const message = data.entry[0].changes[0].value.messages[0];
+    if (message) {
+      const from = message.from;
+      const text = message.text?.body;
 
-      if (message.type === "text") {
-        const from = message.from;
-        const text = (message.text.body || "").toLowerCase();
+      console.log("Received message:", text);
 
-        console.log("User message:", from, text);
-        await handleUserMessage(from, text);
-      }
+      // reply
+      await axios.post(
+        `https://graph.facebook.com/v17.0/${process.env.PHONE_NUMBER_ID}/messages`,
+        {
+          messaging_product: "whatsapp",
+          to: from,
+          text: { body: "Your message: " + text }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
-
-    res.sendStatus(200);
   } catch (err) {
-    console.error("POST /webhook error:", err);
-    res.sendStatus(500);
+    console.error("Error handling message:", err);
   }
+
+  res.sendStatus(200);
 });
 
-// ----------------------------------------------
-// SEND WHATSAPP MESSAGE
-// ----------------------------------------------
-async function sendMessage(to, message) {
-  try {
-    await axios({
-      method: "POST",
-      url: `https://graph.facebook.com/v17.0/${PHONE_ID}/messages`,
-      headers: {
-        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        messaging_product: "whatsapp",
-        to: to,
-        text: { body: message },
-      },
-    });
-
-    console.log("Message sent to", to);
-  } catch (err) {
-    console.error(
-      "Message send error:",
-      err.response?.data || err.message || err
-    );
-  }
-}
-
-// ----------------------------------------------
-// MESSAGE LOGIC
-// ----------------------------------------------
-async function handleUserMessage(user, msg) {
-  if (msg.includes("job") || msg.includes("career")) {
-    return sendMessage(user, `🧿 Job / Career Playlist:\n${PLAYLISTS.job}`);
-  }
-
-  if (msg.includes("business") || msg.includes("money")) {
-    return sendMessage(
-      user,
-      `💰 Business / Money Playlist:\n${PLAYLISTS.business}`
-    );
-  }
-
-  if (
-    msg.includes("marriage") ||
-    msg.includes("relationship") ||
-    msg.includes("love")
-  ) {
-    return sendMessage(
-      user,
-      `❤️ Marriage / Relationship Playlist:\n${PLAYLISTS.marriage}`
-    );
-  }
-
-  if (
-    msg.includes("health") ||
-    msg.includes("disease") ||
-    msg.includes("body")
-  ) {
-    return sendMessage(user, `🧘 Health Playlist:\n${PLAYLISTS.health}`);
-  }
-
-  if (
-    msg.includes("education") ||
-    msg.includes("study") ||
-    msg.includes("children") ||
-    msg.includes("child")
-  ) {
-    return sendMessage(
-      user,
-      `📚 Education / Children Playlist:\n${PLAYLISTS.education}`
-    );
-  }
-
-  if (msg.includes("other") || msg.includes("etc") || msg.includes("misc")) {
-    return sendMessage(user, `🌀 Other Playlist:\n${PLAYLISTS.other}`);
-  }
-
-  // DEFAULT REPLY
-  return sendMessage(
-    user,
-    `🙏 *Puratan Hindu Tarika Bot*  
-
-Reply with any topic:
-1️⃣ Job / Career  
-2️⃣ Business / Money  
-3️⃣ Marriage / Relationship  
-4️⃣ Health  
-5️⃣ Education / Children  
-6️⃣ Other  
-
-Example: *job*, *business*, *marriage*`
-  );
-}
-
-// ----------------------------------------------
-// ROOT PAGE
-// ----------------------------------------------
+// --------------------------
+// 3) HOME ROUTE
+// --------------------------
 app.get("/", (req, res) => {
-  res.send("Puratan Hindu Tarika Bot is Running Successfully ✔️");
+  res.send("WhatsApp bot is running");
 });
 
-// ----------------------------------------------
-// START SERVER
-// ----------------------------------------------
-const PORT = process.env.PORT || 10000;
+// --------------------------
+// 4) START SERVER
+// --------------------------
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("=======================================");
-  console.log(" Server is live on PORT:", PORT);
-  console.log("=======================================");
+  console.log("Server running on port " + PORT);
 });
